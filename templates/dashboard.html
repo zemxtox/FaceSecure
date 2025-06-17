@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12 text-center">
+        <h2 class="fw-bold">Welcome, {{ user.username }}!</h2>
+        <p class="lead">Manage your cameras, faces, and start real-time detection below.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Cameras</h5>
+                <p class="display-6">{{ cameras|length }}</p>
+                <a href="/api/cameras/" class="btn btn-outline-primary btn-sm">Manage Cameras</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Known Faces</h5>
+                <p class="display-6">{{ faces|length }}</p>
+                <a href="/faces/add/" class="btn btn-outline-primary btn-sm">Add Face</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h4 class="card-title mb-4">Start Face Detection</h4>
+                <form method="post" action="/api/detection/start_detection/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-primary">
+                        <i class="fas fa-play me-2"></i>Start Detection
+                    </button>
+                </form>
+                <p class="text-muted mt-3">
+                    This will start face detection on all your active cameras.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Recent Detections</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Camera</th>
+                                <th>Face</th>
+                                <th>Confidence</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detection in recent_detections %}
+                            <tr>
+                                <td>{{ detection.timestamp }}</td>
+                                <td>{{ detection.camera.name }}</td>
+                                <td>{{ detection.detected_face.name|default:"Unknown" }}</td>
+                                <td>{{ detection.confidence_score|floatformat:2 }}</td>
+                                <td>
+                                    <span class="badge {% if detection.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ detection.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No detections yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

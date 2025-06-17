@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm mt-5">
+            <div class="card-body">
+                <h2 class="mb-4 text-center">Add New Face</h2>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" id="id_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_image" class="form-label">Face Image</label>
+                        <input type="file" name="image" class="form-control" id="id_image" accept="image/*" required>
+                        <div class="form-text">Upload a clear photo of the face you want to detect.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Add Face</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="/dashboard/" class="btn btn-link">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
