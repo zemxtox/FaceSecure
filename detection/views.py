@@ -12,6 +12,8 @@ from .models import Detection
 from .serializers import DetectionSerializer, DetectionCreateSerializer
 import threading
 from .utils import process_camera
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 @login_required
 def start_streams(request):
@@ -32,7 +34,8 @@ def start_streams(request):
     })
 
 class DetectionViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication]  # Add this line
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'notification_sent']
     search_fields = ['camera__name', 'detected_face__name']
@@ -49,16 +52,20 @@ class DetectionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def start_detection(self, request):
-        cameras = request.user.cameras.filter(is_active=True)
-        if not cameras.exists():
-            return Response(
-                {'error': 'No active cameras found'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        for camera in cameras:
-            thread = threading.Thread(target=process_camera, args=(camera, request.user))
-            thread.start()
-        return Response({
-            'status': 'Detection started',
-            'cameras_count': cameras.count()
-        })
+        try:
+            cameras = request.user.cameras.filter(is_active=True)
+            if not cameras.exists():
+                return Response(
+                    {'error': 'No active cameras found'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            for camera in cameras:
+                thread = threading.Thread(target=process_camera, args=(camera, request.user))
+                thread.daemon = True  # Add this line
+                thread.start()
+            return Response({
+                'status': 'Detection started',
+                'cameras_count': cameras.count()
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

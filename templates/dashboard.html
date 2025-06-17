@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
+{% csrf_token %}  <!-- Add this line below the block content -->
+
 <div class="row mt-4">
     <div class="col-md-12 text-center">
         <h2 class="fw-bold">Welcome, {{ user.username }}!</h2>
@@ -14,6 +16,7 @@
                 <h5 class="card-title">Cameras</h5>
                 <p class="display-6">{{ cameras|length }}</p>
                 <a href="/api/cameras/" class="btn btn-outline-primary btn-sm">Manage Cameras</a>
+                <a href="{% url 'add_camera' %}" class="btn btn-outline-primary btn-sm">Add Camera</a>
             </div>
         </div>
     </div>
@@ -22,7 +25,7 @@
             <div class="card-body">
                 <h5 class="card-title">Known Faces</h5>
                 <p class="display-6">{{ faces|length }}</p>
-                <a href="/faces/add/" class="btn btn-outline-primary btn-sm">Add Face</a>
+                <a href="{% url 'add_face' %}" class="btn btn-outline-primary btn-sm">Add Face</a>
             </div>
         </div>
     </div>
@@ -33,12 +36,9 @@
         <div class="card shadow-sm">
             <div class="card-body text-center">
                 <h4 class="card-title mb-4">Start Face Detection</h4>
-                <form method="post" action="/api/detection/start_detection/">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-lg btn-primary">
-                        <i class="fas fa-play me-2"></i>Start Detection
-                    </button>
-                </form>
+                <button type="button" class="btn btn-lg btn-primary" onclick="startDetection()">
+                    <i class="fas fa-play me-2"></i>Start Detection
+                </button>
                 <p class="text-muted mt-3">
                     This will start face detection on all your active cameras.
                 </p>
@@ -88,4 +88,36 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+
+<script>
+function startDetection() {
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfTokenElement) {
+        console.error('CSRF token not found');
+        alert('Error: CSRF token missing. Please refresh the page.');
+        return;
+    }
+    
+    fetch('/api/detection/start_detection/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfTokenElement.value
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert('Detection started on ' + data.cameras_count + ' cameras');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error starting detection. Please try again.');
+    });
+}
+</script>
+{% endblock %}

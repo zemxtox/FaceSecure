@@ -1,13 +1,13 @@
 import cv2, time, os
 import datetime
-import face_recognition
+import face_recognition 
 from threading import Thread
 from django.conf import settings
-from .utils import encode_known_faces
-from .email_utils import send_alert
+from .utils import load_known_faces  # Remove encode_known_faces from import
+from .email_utils import send_email_alert
 
 def process_camera(camera, user):
-    encodings = encode_known_faces(user)
+    known_encodings, known_names = load_known_faces(user)
     cap = cv2.VideoCapture(camera.ip_address)
     last_sent = None
 
@@ -23,7 +23,7 @@ def process_camera(camera, user):
         encs = face_recognition.face_encodings(rgb, locations)
 
         for face_encoding, face_location in zip(encs, locations):
-            for name, known_enc in encodings.items():
+            for name, known_enc in zip(known_names, known_encodings):
                 matches = face_recognition.compare_faces([known_enc], face_encoding, tolerance=0.6)
                 if True in matches:
                     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -31,7 +31,7 @@ def process_camera(camera, user):
                     os.makedirs("media/detections", exist_ok=True)
                     cv2.imwrite(path, frame)
                     if not last_sent or (datetime.datetime.now() - last_sent).total_seconds() > 60:
-                        send_alert(f"🚨 Alert: {name} detected!",
+                        send_email_alert(f"🚨 Alert: {name} detected!",
                                    f"{name} was detected on camera {camera.name}",
                                    user.email,
                                    path)

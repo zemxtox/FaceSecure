@@ -4,8 +4,7 @@ from .models import Camera
 class CameraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Camera
-        fields = ('id', 'name', 'ip_address', 'port', 'username', 'password', 'is_active', 'created_at', 'updated_at')
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        fields = ['id', 'name', 'ip_address', 'port', 'username', 'password', 'is_active']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -18,4 +17,4 @@ class CameraSerializer(serializers.ModelSerializer):
         if 'password' in validated_data:
             password = validated_data.pop('password')
             instance.password = password
-        return super().update(instance, validated_data) 
+        return super().update(instance, validated_data)
